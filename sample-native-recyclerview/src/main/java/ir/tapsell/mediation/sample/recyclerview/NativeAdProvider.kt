@@ -87,6 +87,8 @@ object NativeAdProvider {
                 .build(),
             activity
         )
+
+        shownAds.add(id)
     }
 
     /**
