@@ -40,8 +40,6 @@ internal class RecyclerViewAdapter(
 
     override fun getItemCount(): Int =
         recyclerViewItems.size + adsCount(recyclerViewItems.size)
-//        if (NativeAdProvider.adAvailable()) recyclerViewItems.size + adsCount(recyclerViewItems.size)
-//        else recyclerViewItems.size
 
     /**
      * Determines the view type for the given position.
@@ -102,6 +100,8 @@ internal class RecyclerViewAdapter(
         recyclerViewItems.addAll(items)
         notifyItemRangeInserted(currentCount - 1, items.size)
     }
+
+    fun getCurrentItems() = recyclerViewItems.toList()
 
     private fun adsCount(size: Int): Int = size / ADS_FREQUENCY
 

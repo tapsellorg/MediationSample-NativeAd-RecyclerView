@@ -1,5 +1,6 @@
 package ir.tapsell.mediation.sample.recyclerview.ui
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,12 +16,8 @@ import ir.tapsell.mediation.sample.recyclerview.RecyclerViewAdapter
 class RecyclerViewFragment internal constructor(private val initialData: List<MenuItem> = listOf()) : Fragment() {
     // Used for an endless scrolling experience
     private lateinit var progressBar: ProgressBar
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // retain this fragment
-        retainInstance = true
-    }
+    private lateinit var layoutManager: LinearLayoutManager
+    private lateinit var adapter: RecyclerViewAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
@@ -34,11 +31,16 @@ class RecyclerViewFragment internal constructor(private val initialData: List<Me
         recyclerView.setHasFixedSize(true)
 
         // Specify a linear layout manager.
-        val layoutManager = LinearLayoutManager(context)
+        layoutManager = LinearLayoutManager(context)
         recyclerView.layoutManager = layoutManager
 
+        savedInstanceState?.getInt(POSITION_BUNDLE_KEY)?.let {
+            layoutManager.scrollToPositionWithOffset(it, 2)
+        }
+
         // Specify an adapter.
-        val adapter = RecyclerViewAdapter(requireActivity(), initialData.toMutableList())
+        adapter = RecyclerViewAdapter(requireActivity(), getCurrentData(savedInstanceState))
+
         recyclerView.adapter = adapter
 
         recyclerView.addOnScrollListener(object : InfiniteScrollListener(layoutManager) {
@@ -59,5 +61,25 @@ class RecyclerViewFragment internal constructor(private val initialData: List<Me
     override fun onDestroyView() {
         NativeAdProvider.destroyNativeAds()
         super.onDestroyView()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelableArrayList(ITEMS_BUNDLE_KEY, ArrayList(adapter.getCurrentItems()))
+        outState.putInt(POSITION_BUNDLE_KEY, layoutManager.findFirstVisibleItemPosition())
+    }
+
+    private fun getCurrentData(savedInstanceState: Bundle?) =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            savedInstanceState?.getParcelableArrayList(
+                ITEMS_BUNDLE_KEY, MenuItem::class.java)?.toMutableList() ?: initialData.toMutableList()
+        } else {
+            savedInstanceState?.getParcelableArrayList<MenuItem>(
+                ITEMS_BUNDLE_KEY)?.toMutableList() ?: initialData.toMutableList()
+        }
+
+    companion object {
+        private const val ITEMS_BUNDLE_KEY = "items-bundle-key"
+        private const val POSITION_BUNDLE_KEY = "position-bundle-key"
     }
 }
