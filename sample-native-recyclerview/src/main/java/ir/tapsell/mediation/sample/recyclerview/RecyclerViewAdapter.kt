@@ -1,7 +1,6 @@
 package ir.tapsell.mediation.sample.recyclerview
 
 import android.app.Activity
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -45,7 +44,11 @@ internal class RecyclerViewAdapter(
      * Determines the view type for the given position.
      */
     override fun getItemViewType(position: Int): Int =
-        if (position != 0 && ((position + 1) % ADS_FREQUENCY) == 0 && NativeAdProvider.adAvailable()) NATIVE_AD_VIEW_TYPE
+        if (
+            ((position + 1) == FIRST_AD_INDEX ||
+            ((position + 1) > FIRST_AD_INDEX && ((position + 1 - FIRST_AD_INDEX) % ADS_FREQUENCY) == 0)) &&
+            NativeAdProvider.adAvailable()
+        ) NATIVE_AD_VIEW_TYPE
         else MENU_ITEM_VIEW_TYPE
 
     /**
@@ -103,7 +106,9 @@ internal class RecyclerViewAdapter(
 
     fun getCurrentItems() = recyclerViewItems.toList()
 
-    private fun adsCount(size: Int): Int = size / ADS_FREQUENCY
+    private fun adsCount(size: Int): Int =
+        if (size >= FIRST_AD_INDEX) ((size - FIRST_AD_INDEX) / ADS_FREQUENCY) + 1
+        else 0
 
     private fun getItemForPosition(position: Int): MenuItem =
         recyclerViewItems[position - adsCount(position - 1)]
@@ -114,5 +119,6 @@ internal class RecyclerViewAdapter(
         private const val NATIVE_AD_VIEW_TYPE = 1
 
         private const val ADS_FREQUENCY: Int = 10 // frequency of ads in list
+        private const val FIRST_AD_INDEX: Int = 3 // the position of the first ad view (counting from 1)
     }
 }
