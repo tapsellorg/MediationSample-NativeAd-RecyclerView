@@ -54,8 +54,8 @@ class RecyclerViewFragment internal constructor(private val initialData: List<Me
         return rootView
     }
 
-    override fun onDestroy() {
+    override fun onDestroyView() {
         NativeAdProvider.destroyNativeAds()
-        super.onDestroy()
+        super.onDestroyView()
     }
 }
