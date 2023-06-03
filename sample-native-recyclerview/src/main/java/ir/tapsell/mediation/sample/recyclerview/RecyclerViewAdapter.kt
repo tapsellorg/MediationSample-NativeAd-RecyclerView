@@ -45,9 +45,8 @@ internal class RecyclerViewAdapter(
      */
     override fun getItemViewType(position: Int): Int =
         if (
-            ((position + 1) == FIRST_AD_INDEX ||
-            ((position + 1) > FIRST_AD_INDEX && ((position + 1 - FIRST_AD_INDEX) % ADS_FREQUENCY) == 0)) &&
-            NativeAdProvider.adAvailable()
+            (position + 1) == FIRST_AD_INDEX ||
+            ((position + 1) > FIRST_AD_INDEX && ((position + 1 - FIRST_AD_INDEX) % ADS_FREQUENCY) == 0)
         ) NATIVE_AD_VIEW_TYPE
         else MENU_ITEM_VIEW_TYPE
 
@@ -56,7 +55,7 @@ internal class RecyclerViewAdapter(
      * based on the viewType. This method is invoked by the layout manager.
      */
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
-        if (viewType == NATIVE_AD_VIEW_TYPE && NativeAdProvider.adAvailable()) {
+        if (viewType == NATIVE_AD_VIEW_TYPE) {
             val holder = NativeAdViewHolder(
                 LayoutInflater.from(viewGroup.context).inflate(
                     R.layout.ad_item_container, viewGroup, false
@@ -75,7 +74,7 @@ internal class RecyclerViewAdapter(
      * Native ad view. This method is invoked by the layout manager.
      */
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (getItemViewType(position) == NATIVE_AD_VIEW_TYPE && NativeAdProvider.adAvailable()) {
+        if (getItemViewType(position) == NATIVE_AD_VIEW_TYPE) {
             (holder as NativeAdViewHolder).bindAd(activity)
         }
         else {

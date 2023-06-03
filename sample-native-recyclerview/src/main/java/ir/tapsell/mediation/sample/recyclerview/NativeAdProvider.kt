@@ -2,6 +2,7 @@ package ir.tapsell.mediation.sample.recyclerview
 
 import android.app.Activity
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import ir.tapsell.mediation.Tapsell
 import ir.tapsell.mediation.ad.request.RequestResultListener
@@ -46,33 +47,35 @@ object NativeAdProvider {
      */
     internal fun bindAdView(activity: Activity, parent: ViewGroup) {
         availableNewAds.poll()?.let { newAdId ->
-            val adViewContainer = activity.layoutInflater.inflate(R.layout.ad_item, null) as NativeAdViewContainer
-
-            // Since the parent view is a recycled one, removing previous views is necessary
-            // not to over-populate the container with views on top of each-other
-            parent.removeAllViews()
-            parent.addView(adViewContainer)
-
-            showAdInContainer(newAdId, adViewContainer, activity)
+            showAd(newAdId, activity, parent)
+            shownAds.add(newAdId)
+        } ?: run {
+            // No previous ad is shown by the recyclerview
+            if (parent.childCount == 0) {
+                Tapsell.requestNativeAd(ZONE_ID, object : RequestResultListener {
+                    override fun onFailure() { parent.visibility = View.GONE }
+                    override fun onSuccess(adId: String) {
+                        if (parent.isShown && parent.childCount == 0) {
+                            showAd(adId, activity, parent)
+                            shownAds.add(adId)
+                        } else availableNewAds.add(adId)
+                    }
+                })
+            }
         }
 
         requestForNewAdsIfNeeded()
     }
 
-    internal fun destroyNativeAds() {
-        shownAds.forEach {
-            Tapsell.destroyNativeAd(it)
-        }
-        shownAds.clear()
-    }
+    private fun showAd(adId: String, activity: Activity, parent: ViewGroup) {
+        val adViewContainer = activity.layoutInflater.inflate(R.layout.ad_item, null) as NativeAdViewContainer
+        // Since the parent view is a recycled one, removing previous views is necessary
+        // not to over-populate the container with views on top of each-other
+        parent.removeAllViews()
+        parent.addView(adViewContainer)
 
-    internal fun adAvailable() = (availableNewAds.isNotEmpty() || shownAds.isNotEmpty()).also {
-        if (!it) requestForNewAdsIfNeeded()
-    }
-
-    private fun showAdInContainer(id: String, adViewContainer: NativeAdViewContainer, activity: Activity) {
         Tapsell.showNativeAd(
-            id,
+            adId,
             NativeAdView.Builder(adViewContainer)
                 // The MediaView will display a video asset if one is present in the ad, and the
                 // first image asset otherwise.
@@ -87,8 +90,13 @@ object NativeAdProvider {
                 .build(),
             activity
         )
+    }
 
-        shownAds.add(id)
+    internal fun destroyNativeAds() {
+        shownAds.forEach {
+            Tapsell.destroyNativeAd(it)
+        }
+        shownAds.clear()
     }
 
     /**
