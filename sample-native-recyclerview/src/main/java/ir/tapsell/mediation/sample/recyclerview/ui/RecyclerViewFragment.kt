@@ -45,8 +45,10 @@ class RecyclerViewFragment internal constructor(private val initialData: List<Me
             override fun onScrolledToEnd() {
                 progressBar.visibility = View.VISIBLE
                 (activity as MainActivity).loadMoreData {
-                    adapter.addNewItems(it)
-                    progressBar.visibility = View.GONE
+                    recyclerView.post {
+                        adapter.addNewItems(it)
+                        progressBar.visibility = View.GONE
+                    }
                 }
             }
         })
